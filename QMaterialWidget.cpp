@@ -24,7 +24,8 @@ QMaterialWidget::QMaterialWidget(QWidget *parent)
       m_rippleDurationMs(250),
       m_mousePressedInside(false),
       m_shadowMargins(24, 24, 24, 36),
-      m_userContentsMargins(0, 0, 0, 0)
+      m_userContentsMargins(0, 0, 0, 0),
+      m_shadowIntensity(1.0)
 {
     // Не используем WA_StyledBackground, чтобы фон не рисовался под тенью
     // Вместо этого будем рисовать фон вручную только внутри области карточки
@@ -75,6 +76,16 @@ void QMaterialWidget::setShadowEnabled(bool on)
         return;
 
     m_shadowEnabled = on;
+    update();
+}
+
+void QMaterialWidget::setShadowIntensity(qreal intensity)
+{
+    intensity = qBound(0.0, intensity, 1.0);
+    if (qFuzzyCompare(m_shadowIntensity, intensity))
+        return;
+
+    m_shadowIntensity = intensity;
     update();
 }
 
@@ -228,7 +239,7 @@ void QMaterialWidget::paintShadow(QPainter &p, const QRectF &cardRect)
         r.translate(0, yOffset); // смещение вниз
 
         QColor c = baseColor;
-        c.setAlphaF(baseColor.alphaF() * (1.0 - t));
+        c.setAlphaF(baseColor.alphaF() * (1.0 - t) * m_shadowIntensity);
 
         QPainterPath path;
         path.addRoundedRect(r, m_cornerRadius + grow, m_cornerRadius + grow);

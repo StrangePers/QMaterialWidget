@@ -74,7 +74,7 @@ MainWindow::MainWindow(QWidget *parent)
     configureShadowMargins(card2);
     card2->setFixedSize(300, 150);
     card2->setStyleSheet("background-color: #2196F3; border: none;");
-    card2->setElevationStates(4.0, 8.0, 12.0); // rest, hover, pressed
+    card2->setElevationStates(4.0, 5.0, 6.0); // rest, hover, pressed
     card2->setCornerRadius(16.0);
     
     QVBoxLayout *card2Layout = new QVBoxLayout(card2);

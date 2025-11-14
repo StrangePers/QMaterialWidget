@@ -18,6 +18,7 @@ class QMaterialWidget : public QWidget
     Q_PROPERTY(bool rippleEnabled READ isRippleEnabled WRITE setRippleEnabled)
     Q_PROPERTY(qreal cornerRadius READ cornerRadius WRITE setCornerRadius)
     Q_PROPERTY(QMargins shadowMargins READ shadowMargins WRITE setShadowMargins)
+    Q_PROPERTY(qreal shadowIntensity READ shadowIntensity WRITE setShadowIntensity)
 
 public:
     explicit QMaterialWidget(QWidget *parent = nullptr);
@@ -40,6 +41,9 @@ public:
 
     QMargins shadowMargins() const { return m_shadowMargins; }
     void setShadowMargins(const QMargins &margins);
+
+    qreal shadowIntensity() const { return m_shadowIntensity; }
+    void setShadowIntensity(qreal intensity);
 
     // Настройка уровней elevation
     void setElevationStates(qreal rest, qreal hover, qreal pressed);
@@ -111,4 +115,5 @@ private:
 
     QMargins m_shadowMargins;
     QMargins m_userContentsMargins;
+    qreal m_shadowIntensity;
 };
