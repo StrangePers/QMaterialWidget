@@ -5,6 +5,7 @@
 #include <QPropertyAnimation>
 #include <QTimer>
 #include <QPainterPath>
+#include <QMargins>
 #include <QtGlobal>
 
 class QMaterialWidget : public QWidget
@@ -16,6 +17,7 @@ class QMaterialWidget : public QWidget
     Q_PROPERTY(bool shadowEnabled READ isShadowEnabled WRITE setShadowEnabled)
     Q_PROPERTY(bool rippleEnabled READ isRippleEnabled WRITE setRippleEnabled)
     Q_PROPERTY(qreal cornerRadius READ cornerRadius WRITE setCornerRadius)
+    Q_PROPERTY(QMargins shadowMargins READ shadowMargins WRITE setShadowMargins)
 
 public:
     explicit QMaterialWidget(QWidget *parent = nullptr);
@@ -36,6 +38,9 @@ public:
     qreal cornerRadius() const { return m_cornerRadius; }
     void setCornerRadius(qreal r);
 
+    QMargins shadowMargins() const { return m_shadowMargins; }
+    void setShadowMargins(const QMargins &margins);
+
     // Настройка уровней elevation
     void setElevationStates(qreal rest, qreal hover, qreal pressed);
 
@@ -45,6 +50,13 @@ public:
 signals:
     void elevationChanged(qreal value);
     void clicked(); // удобный сигнал "карточка нажата"
+
+public:
+    // Переопределяем стандартные отступы, чтобы учитывать область тени
+    void setContentsMargins(int left, int top, int right, int bottom);
+    void setContentsMargins(const QMargins &margins);
+    void getContentsMargins(int *left, int *top, int *right, int *bottom) const;
+    QMargins contentsMargins() const;
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -64,8 +76,12 @@ private slots:
 
 private:
     void startElevationAnimation(qreal target);
+    QRectF effectiveCardRect() const;
+    void applyEffectiveContentsMargins();
+    QMargins totalContentsMargins() const;
     QPainterPath cardClipPath(const QRectF &r) const;
     void paintShadow(QPainter &p, const QRectF &cardRect);
+    void paintBackground(QPainter &p, const QRectF &cardRect);
 
     // Включатели
     bool m_elevationEnabled;
@@ -92,4 +108,7 @@ private:
     QColor  m_rippleColor;
     int     m_rippleDurationMs;
     bool    m_mousePressedInside;
+
+    QMargins m_shadowMargins;
+    QMargins m_userContentsMargins;
 };

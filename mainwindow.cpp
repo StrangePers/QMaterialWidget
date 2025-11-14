@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QSpacerItem>
+#include <QMargins>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -23,6 +24,23 @@ MainWindow::MainWindow(QWidget *parent)
     mainLayout->setSpacing(30);
     mainLayout->setContentsMargins(40, 40, 40, 40);
 
+    const auto configureShadowMargins = [](QMaterialWidget *card) {
+        card->setShadowMargins(QMargins(16, 16, 16, 16));
+    };
+
+    const auto wrapCardWithMargin = [](QWidget *card, int margin = 0) {
+        QWidget *wrapper = new QWidget;
+        wrapper->setAttribute(Qt::WA_NoSystemBackground, true);
+        wrapper->setAttribute(Qt::WA_TranslucentBackground, true);
+
+        QVBoxLayout *wrapperLayout = new QVBoxLayout(wrapper);
+        wrapperLayout->setContentsMargins(margin, margin, margin, margin);
+        wrapperLayout->setSpacing(0);
+        wrapperLayout->addWidget(card, 0, Qt::AlignCenter);
+
+        return wrapper;
+    };
+
     // Заголовок
     QLabel *titleLabel = new QLabel("Примеры Material Design виджетов", this);
     titleLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: #333;");
@@ -30,6 +48,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Пример 1: Базовая карточка
     QMaterialWidget *card1 = new QMaterialWidget(this);
+    configureShadowMargins(card1);
     card1->setFixedSize(300, 150);
     card1->setStyleSheet("background-color: white; border: 1px solid #e0e0e0;");
     
@@ -52,6 +71,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Пример 2: Карточка с настройками elevation
     QMaterialWidget *card2 = new QMaterialWidget(this);
+    configureShadowMargins(card2);
     card2->setFixedSize(300, 150);
     card2->setStyleSheet("background-color: #2196F3; border: none;");
     card2->setElevationStates(4.0, 8.0, 12.0); // rest, hover, pressed
@@ -71,6 +91,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Пример 3: Карточка без ripple эффекта
     QMaterialWidget *card3 = new QMaterialWidget(this);
+    configureShadowMargins(card3);
     card3->setFixedSize(300, 150);
     card3->setStyleSheet("background-color: #4CAF50; border: none;");
     card3->setRippleEnabled(false);
@@ -90,6 +111,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Пример 4: Карточка с кастомным цветом ripple
     QMaterialWidget *card4 = new QMaterialWidget(this);
+    configureShadowMargins(card4);
     card4->setFixedSize(300, 150);
     card4->setStyleSheet("background-color: #FF9800; border: none;");
     card4->setRippleColor(QColor(255, 255, 255, 120)); // Белый ripple
@@ -110,14 +132,16 @@ MainWindow::MainWindow(QWidget *parent)
     // Горизонтальный layout для карточек
     QHBoxLayout *cardsLayout = new QHBoxLayout();
     cardsLayout->setSpacing(20);
-    cardsLayout->addWidget(card1);
-    cardsLayout->addWidget(card2);
+    cardsLayout->setContentsMargins(0, 0, 0, 0);
+    cardsLayout->addWidget(wrapCardWithMargin(card1));
+    cardsLayout->addWidget(wrapCardWithMargin(card2));
     cardsLayout->addStretch();
     
     QHBoxLayout *cardsLayout2 = new QHBoxLayout();
     cardsLayout2->setSpacing(20);
-    cardsLayout2->addWidget(card3);
-    cardsLayout2->addWidget(card4);
+    cardsLayout2->setContentsMargins(20, 20, 20, 20);
+    cardsLayout2->addWidget(wrapCardWithMargin(card3));
+    cardsLayout2->addWidget(wrapCardWithMargin(card4));
     cardsLayout2->addStretch();
 
     mainLayout->addLayout(cardsLayout);
@@ -126,6 +150,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Пример 5: Карточка с кнопкой внутри
     QMaterialWidget *card5 = new QMaterialWidget(this);
+    configureShadowMargins(card5);
     card5->setFixedSize(400, 200);
     card5->setStyleSheet("background-color: white; border: 1px solid #e0e0e0;");
     
@@ -162,8 +187,8 @@ MainWindow::MainWindow(QWidget *parent)
         setWindowTitle("Карточка с кнопкой была нажата!");
     });
 
-    mainLayout->addWidget(card5, 0, Qt::AlignHCenter);
-    mainLayout->addStretch();
+    mainLayout->addWidget(wrapCardWithMargin(card5, 16), 0, Qt::AlignHCenter);
+    mainLayout->addStretch(); 
 
     // Устанавливаем фон окна
     centralWidget->setStyleSheet("background-color: #f5f5f5;");

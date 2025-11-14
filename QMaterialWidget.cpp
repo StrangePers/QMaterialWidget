@@ -4,6 +4,7 @@
 #include <QStyleOption>
 #include <QMouseEvent>
 #include <QEasingCurve>
+#include <QStyle>
 
 QMaterialWidget::QMaterialWidget(QWidget *parent)
     : QWidget(parent),
@@ -21,13 +22,15 @@ QMaterialWidget::QMaterialWidget(QWidget *parent)
       m_rippleOpacity(0.0),
       m_rippleColor(0, 0, 0, 80),
       m_rippleDurationMs(250),
-      m_mousePressedInside(false)
+      m_mousePressedInside(false),
+      m_shadowMargins(24, 24, 24, 36),
+      m_userContentsMargins(0, 0, 0, 0)
 {
-    // Нужен для корректной отрисовки фона из styleSheet
-    setAttribute(Qt::WA_StyledBackground, true);
-
+    // Не используем WA_StyledBackground, чтобы фон не рисовался под тенью
+    // Вместо этого будем рисовать фон вручную только внутри области карточки
     setMouseTracking(true);
     setAutoFillBackground(false);
+    applyEffectiveContentsMargins();
 
     // Анимация elevation
     m_elevationAnim->setDuration(150);
@@ -109,6 +112,80 @@ void QMaterialWidget::setElevationStates(qreal rest, qreal hover, qreal pressed)
     }
 }
 
+void QMaterialWidget::setShadowMargins(const QMargins &margins)
+{
+    if (m_shadowMargins == margins)
+        return;
+
+    m_shadowMargins = margins;
+    applyEffectiveContentsMargins();
+    update();
+}
+
+void QMaterialWidget::setContentsMargins(int left, int top, int right, int bottom)
+{
+    setContentsMargins(QMargins(left, top, right, bottom));
+}
+
+void QMaterialWidget::setContentsMargins(const QMargins &margins)
+{
+    if (m_userContentsMargins == margins)
+        return;
+
+    m_userContentsMargins = margins;
+    applyEffectiveContentsMargins();
+}
+
+void QMaterialWidget::getContentsMargins(int *left, int *top, int *right, int *bottom) const
+{
+    if (left) {
+        *left = m_userContentsMargins.left();
+    }
+    if (top) {
+        *top = m_userContentsMargins.top();
+    }
+    if (right) {
+        *right = m_userContentsMargins.right();
+    }
+    if (bottom) {
+        *bottom = m_userContentsMargins.bottom();
+    }
+}
+
+QMargins QMaterialWidget::contentsMargins() const
+{
+    return m_userContentsMargins;
+}
+
+void QMaterialWidget::applyEffectiveContentsMargins()
+{
+    QWidget::setContentsMargins(totalContentsMargins());
+}
+
+QMargins QMaterialWidget::totalContentsMargins() const
+{
+    return QMargins(
+        m_userContentsMargins.left() + m_shadowMargins.left(),
+        m_userContentsMargins.top() + m_shadowMargins.top(),
+        m_userContentsMargins.right() + m_shadowMargins.right(),
+        m_userContentsMargins.bottom() + m_shadowMargins.bottom());
+}
+
+QRectF QMaterialWidget::effectiveCardRect() const
+{
+    QRectF r = rect();
+    r.adjust(m_shadowMargins.left(),
+             m_shadowMargins.top(),
+             -m_shadowMargins.right(),
+             -m_shadowMargins.bottom());
+
+    if (r.width() <= 0 || r.height() <= 0) {
+        return QRectF(rect());
+    }
+
+    return r;
+}
+
 void QMaterialWidget::startElevationAnimation(qreal target)
 {
     if (!m_elevationEnabled) {
@@ -164,6 +241,27 @@ void QMaterialWidget::paintShadow(QPainter &p, const QRectF &cardRect)
     p.restore();
 }
 
+void QMaterialWidget::paintBackground(QPainter &p, const QRectF &cardRect)
+{
+    // Рисуем фон из QSS только внутри области карточки
+    // Используем QStyleOption для правильного применения стилей
+    QStyleOption opt;
+    opt.initFrom(this);
+    opt.rect = cardRect.toRect();
+    
+    // Временно включаем WA_StyledBackground для правильного чтения QSS стилей
+    // Но рисуем только в области карточки благодаря clipping в paintEvent
+    bool hadStyledBackground = testAttribute(Qt::WA_StyledBackground);
+    setAttribute(Qt::WA_StyledBackground, true);
+    
+    // Рисуем фон и border через стиль
+    // Это правильно применит все стили из QSS (background-color, border и т.д.)
+    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+    
+    // Восстанавливаем исходное состояние
+    setAttribute(Qt::WA_StyledBackground, hadStyledBackground);
+}
+
 void QMaterialWidget::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event);
@@ -172,21 +270,18 @@ void QMaterialWidget::paintEvent(QPaintEvent *event)
     p.setRenderHint(QPainter::Antialiasing, true);
 
     // Немного отступим от краёв, чтобы тень и скругление не обрезались
-    QRectF cardRect = rect().adjusted(2, 2, -2, -2);
+    QRectF cardRect = effectiveCardRect();
+    if (cardRect.isEmpty())
+        return;
 
     // 1) Тень (под карточкой)
     paintShadow(p, cardRect);
 
-    // 2) Фон и бордеры из styleSheet / QStyle
-    {
-        QStyleOption opt;
-        opt.initFrom(this);
-
-        p.save();
-        p.setClipPath(cardClipPath(cardRect));
-        style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
-        p.restore();
-    }
+    // 2) Фон и бордеры из styleSheet / QStyle (только внутри области карточки)
+    p.save();
+    p.setClipPath(cardClipPath(cardRect));
+    paintBackground(p, cardRect);
+    p.restore();
 
     // Дальше Qt сам нарисует детей (QLabel, QLayout и т.п.)
 
@@ -234,7 +329,8 @@ void QMaterialWidget::leaveEvent(QEvent *event)
 
 void QMaterialWidget::mousePressEvent(QMouseEvent *event)
 {
-    m_mousePressedInside = rect().contains(event->pos());
+    const QRectF card = effectiveCardRect();
+    m_mousePressedInside = card.contains(event->pos());
 
     if (m_elevationEnabled) {
         startElevationAnimation(m_pressedElevation);
@@ -247,11 +343,10 @@ void QMaterialWidget::mousePressEvent(QMouseEvent *event)
         m_rippleOpacity = 1.0;
 
         // Максимальный радиус — до самого дальнего угла
-        const QRectF r = rect();
-        const QPointF topLeft = r.topLeft();
-        const QPointF topRight = r.topRight();
-        const QPointF bottomLeft = r.bottomLeft();
-        const QPointF bottomRight = r.bottomRight();
+        const QPointF topLeft = card.topLeft();
+        const QPointF topRight = card.topRight();
+        const QPointF bottomLeft = card.bottomLeft();
+        const QPointF bottomRight = card.bottomRight();
 
         qreal d1 = QLineF(m_rippleCenter, topLeft).length();
         qreal d2 = QLineF(m_rippleCenter, topRight).length();
@@ -269,19 +364,20 @@ void QMaterialWidget::mousePressEvent(QMouseEvent *event)
 
 void QMaterialWidget::mouseReleaseEvent(QMouseEvent *event)
 {
+    const QRectF card = effectiveCardRect();
     const bool wasPressedInside = m_mousePressedInside;
     m_mousePressedInside = false;
 
     if (m_elevationEnabled) {
         // Если мышь всё ещё над виджетом — вернёмся к hover
-        if (rect().contains(event->pos())) {
+        if (card.contains(event->pos())) {
             startElevationAnimation(m_hoverElevation);
         } else {
             startElevationAnimation(m_restElevation);
         }
     }
 
-    if (wasPressedInside && rect().contains(event->pos())) {
+    if (wasPressedInside && card.contains(event->pos())) {
         emit clicked();
     }
 
