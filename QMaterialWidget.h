@@ -7,7 +7,7 @@
 #include <QPainterPath>
 #include <QtGlobal>
 
-class MaterialCardWidget : public QWidget
+class QMaterialWidget : public QWidget
 {
     Q_OBJECT
 
@@ -18,7 +18,7 @@ class MaterialCardWidget : public QWidget
     Q_PROPERTY(qreal cornerRadius READ cornerRadius WRITE setCornerRadius)
 
 public:
-    explicit MaterialCardWidget(QWidget *parent = nullptr);
+    explicit QMaterialWidget(QWidget *parent = nullptr);
 
     // elevation value used in paint (animated)
     qreal elevation() const { return m_elevation; }

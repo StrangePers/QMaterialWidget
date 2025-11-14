@@ -5,7 +5,7 @@
 #include <QMouseEvent>
 #include <QEasingCurve>
 
-MaterialCardWidget::MaterialCardWidget(QWidget *parent)
+QMaterialWidget::QMaterialWidget(QWidget *parent)
     : QWidget(parent),
       m_elevationEnabled(true),
       m_shadowEnabled(true),
@@ -36,10 +36,10 @@ MaterialCardWidget::MaterialCardWidget(QWidget *parent)
     // Ripple таймер
     m_rippleTimer.setInterval(16); // ~60 FPS
     connect(&m_rippleTimer, &QTimer::timeout,
-            this, &MaterialCardWidget::updateRipple);
+            this, &QMaterialWidget::updateRipple);
 }
 
-void MaterialCardWidget::setElevation(qreal value)
+void QMaterialWidget::setElevation(qreal value)
 {
     if (qFuzzyCompare(m_elevation, value))
         return;
@@ -49,7 +49,7 @@ void MaterialCardWidget::setElevation(qreal value)
     update();
 }
 
-void MaterialCardWidget::setElevationEnabled(bool on)
+void QMaterialWidget::setElevationEnabled(bool on)
 {
     if (m_elevationEnabled == on)
         return;
@@ -66,7 +66,7 @@ void MaterialCardWidget::setElevationEnabled(bool on)
     }
 }
 
-void MaterialCardWidget::setShadowEnabled(bool on)
+void QMaterialWidget::setShadowEnabled(bool on)
 {
     if (m_shadowEnabled == on)
         return;
@@ -75,7 +75,7 @@ void MaterialCardWidget::setShadowEnabled(bool on)
     update();
 }
 
-void MaterialCardWidget::setRippleEnabled(bool on)
+void QMaterialWidget::setRippleEnabled(bool on)
 {
     if (m_rippleEnabled == on)
         return;
@@ -88,7 +88,7 @@ void MaterialCardWidget::setRippleEnabled(bool on)
     }
 }
 
-void MaterialCardWidget::setCornerRadius(qreal r)
+void QMaterialWidget::setCornerRadius(qreal r)
 {
     if (qFuzzyCompare(m_cornerRadius, r))
         return;
@@ -97,7 +97,7 @@ void MaterialCardWidget::setCornerRadius(qreal r)
     update();
 }
 
-void MaterialCardWidget::setElevationStates(qreal rest, qreal hover, qreal pressed)
+void QMaterialWidget::setElevationStates(qreal rest, qreal hover, qreal pressed)
 {
     m_restElevation   = rest;
     m_hoverElevation  = hover;
@@ -109,7 +109,7 @@ void MaterialCardWidget::setElevationStates(qreal rest, qreal hover, qreal press
     }
 }
 
-void MaterialCardWidget::startElevationAnimation(qreal target)
+void QMaterialWidget::startElevationAnimation(qreal target)
 {
     if (!m_elevationEnabled) {
         return;
@@ -121,14 +121,14 @@ void MaterialCardWidget::startElevationAnimation(qreal target)
     m_elevationAnim->start();
 }
 
-QPainterPath MaterialCardWidget::cardClipPath(const QRectF &r) const
+QPainterPath QMaterialWidget::cardClipPath(const QRectF &r) const
 {
     QPainterPath path;
     path.addRoundedRect(r, m_cornerRadius, m_cornerRadius);
     return path;
 }
 
-void MaterialCardWidget::paintShadow(QPainter &p, const QRectF &cardRect)
+void QMaterialWidget::paintShadow(QPainter &p, const QRectF &cardRect)
 {
     if (!m_shadowEnabled || !m_elevationEnabled || m_elevation <= 0.0)
         return;
@@ -164,7 +164,7 @@ void MaterialCardWidget::paintShadow(QPainter &p, const QRectF &cardRect)
     p.restore();
 }
 
-void MaterialCardWidget::paintEvent(QPaintEvent *event)
+void QMaterialWidget::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event);
 
@@ -207,7 +207,7 @@ void MaterialCardWidget::paintEvent(QPaintEvent *event)
 }
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-void MaterialCardWidget::enterEvent(QEnterEvent *event)
+void QMaterialWidget::enterEvent(QEnterEvent *event)
 {
     QWidget::enterEvent(event);
     if (m_elevationEnabled) {
@@ -215,7 +215,7 @@ void MaterialCardWidget::enterEvent(QEnterEvent *event)
     }
 }
 #else
-void MaterialCardWidget::enterEvent(QEvent *event)
+void QMaterialWidget::enterEvent(QEvent *event)
 {
     QWidget::enterEvent(event);
     if (m_elevationEnabled) {
@@ -224,7 +224,7 @@ void MaterialCardWidget::enterEvent(QEvent *event)
 }
 #endif
 
-void MaterialCardWidget::leaveEvent(QEvent *event)
+void QMaterialWidget::leaveEvent(QEvent *event)
 {
     QWidget::leaveEvent(event);
     if (m_elevationEnabled) {
@@ -232,7 +232,7 @@ void MaterialCardWidget::leaveEvent(QEvent *event)
     }
 }
 
-void MaterialCardWidget::mousePressEvent(QMouseEvent *event)
+void QMaterialWidget::mousePressEvent(QMouseEvent *event)
 {
     m_mousePressedInside = rect().contains(event->pos());
 
@@ -267,7 +267,7 @@ void MaterialCardWidget::mousePressEvent(QMouseEvent *event)
     QWidget::mousePressEvent(event);
 }
 
-void MaterialCardWidget::mouseReleaseEvent(QMouseEvent *event)
+void QMaterialWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     const bool wasPressedInside = m_mousePressedInside;
     m_mousePressedInside = false;
@@ -288,7 +288,7 @@ void MaterialCardWidget::mouseReleaseEvent(QMouseEvent *event)
     QWidget::mouseReleaseEvent(event);
 }
 
-void MaterialCardWidget::updateRipple()
+void QMaterialWidget::updateRipple()
 {
     if (!m_rippleEnabled) {
         m_rippleTimer.stop();
